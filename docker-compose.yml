@@ -1,0 +1,47 @@
+# Save this as docker-compose.yml in your root directory
+services:
+  # Database
+  postgres:
+    image: postgres:13
+    container_name: globalbooks-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: globalbooks
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Message Queue
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: globalbooks-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Application Server
+  tomcat:
+    image: tomcat:9-jdk11
+    container_name: globalbooks-tomcat
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount the webapps directory so we can deploy WAR files
+      - ./deployment/webapps:/usr/local/tomcat/webapps
+      # Optional: custom server.xml if needed
+      - ./deployment/tomcat/server.xml:/usr/local/tomcat/conf/server.xml
+    environment:
+      CATALINA_OPTS: "-Xms512m -Xmx1024m"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
